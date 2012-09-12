@@ -1,0 +1,11 @@
+{% extends "common/base.html" %}
+
+{% block body %}
+
+<h2>All Articles:</h2>
+
+{% for article in articles %}
+	<h3><a href="{% url swiki_view_swiki article.id %}">{{article.get_display_title}}</a></h3>
+{% endfor %}
+
+{% endblock %}

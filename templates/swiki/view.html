@@ -1,0 +1,227 @@
+{% extends "common/base.html" %}
+{% load markup %}
+
+{% block style %}
+<style>
+	.article-body{
+		background: #b2d8ff;
+	}
+
+	#edit-article-form textarea{
+		width:100%;
+		height: 300px;
+	}
+</style>
+{% endblock %}
+
+{% block javascript %}
+<script>
+
+ajax_form_submit_listener($("#edit-article-form"), function response(response){
+	if( response.success ){
+		window.location.reload();
+	}else{
+		alert(response.message);
+	}
+});
+
+ajax_form_submit_listener($("#add-goal-form"), function response(response){
+	if( response.success ){
+		window.location.reload();
+	}else{
+		alert(response.message);
+	}
+});
+
+ajax_form_submit_listener($(".remove-goal-form"), function response(response){
+	if( response.success ){
+		window.location.reload();
+	}else{
+		alert(response.message);
+	}
+});
+
+ajax_form_submit_listener($("#add-topic-form"), function response_callback(response_json){
+
+	if( response_json.success == false ){
+		alert(response_json.message);
+	}else{
+		$("#topics-ul").append("<h4><a href='" + response_json.url + "'>" + response_json.topic + "</a></h4>");
+	}
+});
+
+ajax_form_submit_listener($(".remove-topic-form"), function response(response){
+	if( response.success ){
+		window.location.reload();
+	}else{
+		alert(response.message);
+	}
+});
+
+ajax_form_submit_listener($(".remove-review-form"), function response(response){
+	if( response.success ){
+		window.location.reload();
+	}else{
+		alert(response.message);
+	}
+});
+
+ajax_form_submit_listener($("#add-review-form"), function response(response){
+	if( response.success ){
+		window.location.reload();
+	}else{
+		alert(response.message);
+	}
+});
+</script>
+{% endblock %}
+
+{% block body %}
+
+	{% if not editable %}
+		<a href="{% url swiki_view_edit_swiki article.id %}" style="float:right;">edit this article</a>
+		<h1>{{article.get_display_title}}</h1>
+	{% else %}
+		<a href="{% url swiki_view_swiki article.id %}" style="float:right;">view this article</a>
+	{% endif %}
+
+	{% if editable %}
+		<form id="edit-article-form" method="POST" action="{% url swiki_action_update_article %}">
+			<input type="hidden" name="article_id" value="{{article.id}}"/>
+			<label>title:</label>
+			<input type="text" value="{{article.title}}" name="article_title"/>
+			<label>disambiguation:</label>
+			<input type="text" value="{{article.disambiguation}}" name="article_disambiguation"/>
+			<textarea id="article-body" name="article_body">{{ article.body }}</textarea>
+			<br/>
+			<button type="submit">Save Changes</button>
+		</form>
+		<p>Swikis employ a markdown language similar to wikipedia"s <a href="http://en.wikipedia.org/wiki/Markdown">What is markdown?</a> | <a href="http://homepage.univie.ac.at/werner.robitza/markdown/">do it for me</a></p>
+	{% else %}
+		<div class="border article-body">
+			<!-- escapes HTML and then applies markdown -->
+			<p>{{ article.body|force_escape|markdown }}</p>
+		</div>
+	{% endif %}
+
+	<!-- goals -->
+	<br/>
+	<h4>Effects ({{ article.get_goal_relations.count }})</h4>
+	<ul>
+		<h4>Positively Correlated ({{article.get_positive_correlation_goal_relations.count}})</h4>
+		<ul>
+		{% for relation in article.get_positive_correlation_goal_relations %}
+			<div class="border">
+				<h4><a href="{% url swiki_view_swiki relation.goal.id %}">{{relation.goal.get_display_title}}</a> ({{relation.correlation}})</h4>
+				<p>{{relation.body}}</p>
+				{% if editable %}
+					<form class="remove-goal-form" method="POST" action="{% url swiki_action_remove_goal_relation %}">
+						<input type="hidden" name="relation_id" value="{{relation.id}}">
+						<button type="submit">remove</button>
+					</form>
+				{% endif %}
+			</div>
+		{% endfor %}
+		</ul>
+
+		<br/>
+		<h4>Negatively Correlated ({{article.get_negative_correlation_goal_relations.count}})</h4>
+		<ul>
+		{% for relation in article.get_negative_correlation_goal_relations %}
+			<div class="border">
+				<h4><a href="{% url swiki_view_swiki relation.goal.id %}">{{relation.goal.get_display_title}}</a> ({{relation.correlation}})</h4>
+				<p>{{relation.body}}</p>
+				{% if editable %}
+					<form class="remove-goal-form" method="POST" action="{% url swiki_action_remove_goal_relation %}">
+						<input type="hidden" name="relation_id" value="{{relation.id}}">
+						<button type="submit">remove</button>
+					</form>
+				{% endif %}
+			</div>
+		{% endfor %}
+		</ul>
+
+		<br/>
+		{% if not editable %}
+			<!-- add effect -->
+			<form id="add-goal-form" method="POST" action="{% url swiki_action_add_goal %}">
+				<label>Add effect:</label><br>
+				<input type="hidden" name="article_id" value="{{article.id}}"/>
+				<label>Action:</label>
+				<input type="text" name="goal_action"/>
+				<br>
+				<label>Object:</label>
+				<input type="text" name="goal_object"/>
+				<br/>
+				<label>correlation to {{article.title}}:</label>
+				<label><input type="radio" name="goal_correlation" value="positive" checked="checked"/>positive</label>
+				<label><input type="radio" name="goal_correlation" value="negative"/>negative</label>
+				<br/>
+				<textarea name="goal_reason"></textarea>
+				<br/>
+				<button type="submit">add goal</button>
+			</form>
+		{% endif %}
+	</ul>
+	<!-- end goals -->
+
+	<!-- topics -->
+	<h4>Topics ({{ article.topics.count }})</h4>
+	<ul id="topics-ul">
+		{% for topic in article.topics.all %}
+			<h4><a href="{% url swiki_view_topic topic.name %}">{{topic}}</a></h4>
+			{% if editable %}
+				<form class="remove-topic-form" method="POST" action="{% url swiki_action_remove_topic %}">
+					<input type="hidden" name="article_id" value="{{article.id}}"/>
+					<input type="hidden" name="topic_id" value="{{topic.id}}"/>
+					<button type="submit">remove</button>
+				</form>
+			{% endif %}
+		{% endfor %}
+	</ul>
+
+	<ul>
+		{% if not editable %}
+			<form id="add-topic-form" method="POST" action="{% url swiki_action_add_topic %}">
+				<input type="hidden" name="article_id" value="{{article.id}}"/>
+				<input type="text" name="topic_title"/>
+				<button type="submit">add topic</button>
+			</form>
+		{% endif %}
+	</ul>
+	<!-- end topics -->
+
+	<div style="display">
+	<!-- reviews -->
+	<h4>Reviews ({{article.reviews.count}})</h4>
+	<ul>
+		{% for review in article.reviews.all %}
+			<div class="border">
+				<h3>{{review.title}}</h3>
+				<p>{{review.body}}</p>
+				{% if editable %}
+					<form class="remove-review-form" method="POST" action="{% url swiki_action_remove_review %}">
+						<input type="hidden" name="review_id" value="{{ review.id }}">
+						<button type="submit">remove review</button> 
+					</form>
+				{% endif %}
+			</div>
+		{% endfor %}
+
+		<!-- add review field -->
+		{% if not editable %}
+			<h4>Add Review</h4>
+			<form id="add-review-form" method="POST" action="{% url swiki_action_add_review %}">
+				<input type="hidden" name="article_id" value="{{article.id}}"/>
+				<input type="text" name="review_title"/>
+				<br/>
+				<textarea name="review_body"></textarea>
+				<br/>
+				<button type="submit">Submit Review</button>
+			</form>
+		{% endif %}
+	</ul>
+	<!-- end reviews -->
+	</div>
+
+{% endblock %}

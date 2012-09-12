@@ -1,0 +1,39 @@
+{% extends "common/base.html" %}
+
+{% block style %}
+<style>
+textarea{
+	width: 100%;
+	height: 150px;
+	font-family:arial;
+	font-size: 16px;
+}
+</style>
+{% endblock %}
+
+{% block javascript %}
+<script>
+function create_article(){
+	ajax_form_submit( $("#create-form"), function(response){
+
+		if(response.success){
+			window.location = response.url;
+		}else{
+			alert(response.message);
+		}
+	})
+}
+</script>
+{% endblock %}
+
+{% block body %}
+<form id="create-form" method="POST" action="{% url swiki_action_create_article %}">
+	<label>action:</label>
+	<input type="text" name="article_title"/>
+	<label>object:</label>
+	<input type="text" name="article_disambiguation"/>
+	<textarea name="article_body"></textarea>
+	<button type="button" onclick="create_article()">create</button>
+</form>
+<p>Swikis employ a markdown language similar to wikipedia's <a href='http://en.wikipedia.org/wiki/Markdown'>What is markdown?</a> | <a href='http://homepage.univie.ac.at/werner.robitza/markdown/'>do it for me</a></p>
+{% endblock %}

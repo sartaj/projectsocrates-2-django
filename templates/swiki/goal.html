@@ -1,0 +1,19 @@
+{% extends "common/base.html" %}
+
+{% block body %}
+	{% if not goal_exists %}
+		<h1>goal does not exist :(</h1>
+	{% else %}
+		<h1>{{goal.name}}</h1>
+
+		<h4>Possible ways to achieve this goal:</h4>
+
+		<ul>
+			{% for swiki in goal.get_all_swikis %}
+				<h4><a href="{% url swiki_view_swiki swiki.id %}">{{swiki.title}} ({{swiki.disambiguation}})</a></h4>
+			{% endfor %}
+		</ul>
+	{% endif %}
+{% endblock %}
+
+

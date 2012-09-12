@@ -1,0 +1,34 @@
+{% extends "common/base.html" %}
+
+{% block javascript %}
+<script>
+ajax_form_submit_listener($(".goal-form"), function response(response){
+	if(response.success){
+		var html = "";
+		for(var index in response.paths){
+			var url = response.paths[index]['url'];
+			var title = response.paths[index]['title']
+			var count = response.paths[index]['count']
+			html += "<p><a href='" + url + "'>" + title + " (" + count + ")</a></p>";
+		}
+
+		$("#results").html(html);
+	}else{
+		alert(response.message);
+	}
+});
+</script>
+{% endblock %}
+
+{% block body %}
+<form class="goal-form" method="POST" action="{% url swiki_action_submit_achieve_query %}">
+	<label>Action:</label>
+	<input name="action" />
+	<label>Object:</label>
+	<input name="object" />
+	<button type="submit">achieve</button>
+</form>
+
+<div id="results">
+</div>
+{% endblock %}
